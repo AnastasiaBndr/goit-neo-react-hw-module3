@@ -1,58 +1,45 @@
-import { useEffect, useState } from "react";
 import "./App.css";
-import Description from "./Description";
-import Feedback from "./Feedback";
-import Options from "./Options";
-import Notification from "./Notification";
+import contactsList from "../data/contactsList.json";
+import ContactForm from "./ContactForm";
+import SearchBox from "./SearchBox";
+import ContactList from "./ContactList";
+import { useEffect, useState } from "react";
 
 function App() {
-  const [feedback, setFeedback] = useState(() => {
-    const fb = window.localStorage.getItem("feedback");
-    if (fb !== null) return JSON.parse(fb);
+  const [contacts, setContacts] = useState(() => {
+    const localItem = window.localStorage.getItem("contacts-list");
+    if (localItem !== null ) return JSON.parse(localItem);
 
-    return { good: 0, neutral: 0, bad: 0 };
+    return contactsList;
   });
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    window.localStorage.setItem("feedback", JSON.stringify(feedback));
-  }, [feedback]);
+    window.localStorage.setItem("contacts-list", JSON.stringify(contacts));
+  }, [contacts]);
 
-  const totalFeedback = feedback.good + feedback.neutral + feedback.bad;
-  const positiveFeedback = Math.round((feedback.good / totalFeedback) * 100);
-
-  function updateFeedback(feedbackType) {
-    setFeedback({
-      ...feedback,
-      [feedbackType]: feedback[feedbackType] + 1,
+  const addContact = (newContact) => {
+    setContacts((prevContacts) => {
+      return [...prevContacts, newContact];
     });
-  }
+  };
 
-  function resetFeedback() {
-    setFeedback({
-      good: 0,
-      neutral: 0,
-      bad: 0,
+  const deleteContact = (id) => {
+    setContacts((prevContacts) => {
+      return prevContacts.filter((contact) => contact.id != id);
     });
-    localStorage.removeItem("feedback");
-  }
+  };
+
+  const visibleContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
     <>
-      <Description />
-      <Options
-        options={updateFeedback}
-        totalFeedback={totalFeedback}
-        resetFeedback={resetFeedback}
-      />
-      {totalFeedback ? (
-        <Feedback
-          feedback={feedback}
-          totalFeedback={totalFeedback}
-          positiveFeedback={positiveFeedback}
-        />
-      ) : (
-        <Notification />
-      )}
+      <h1>Phonebook</h1>
+      <ContactForm addContact={addContact} />
+      <SearchBox value={filter} onFilter={setFilter} />
+      <ContactList contacts={visibleContacts} onDelete={deleteContact} />
     </>
   );
 }
